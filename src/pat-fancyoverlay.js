@@ -42,12 +42,20 @@ define([
 
         defaults: {
             actionButtonSelector: '.formControls > input[type="submit"]',
-            content: '#content',
             prependContent: '.portalMessage',
-            actions: {},
+
+            // different modal modes
+            target: undefined,  // If set, the value will be used as selector to find the modal's contents.
+            html: undefined,    // If set, the value will be used as HTML string content for the modal.
+            image: undefined,   // If set to true, then the anchor's href attribute will be used as image source.
+            ajaxUrl: null,  // Url
+
+            // ajax mode
+            ajaxContentFilterSelector: '#content',
+            ajaxExtraParameter: {'ajax_load': 1},  // extra url parameters for ajax loading
+
+            // action options
             actionOptions: {
-                target: null,
-                ajaxUrl: null, // string, or function($el, options) that returns a string
                 timeout: 5000,
                 displayInModal: false,
                 reloadWindowOnClose: true,
@@ -90,15 +98,6 @@ define([
             window.parent.location.reload();
         },
         init: function() {
-            if (this.$el.attr('href') && !this.options.image) {
-                if (!this.options.target && this.$el.attr('href').substr(0, 1) === '#') {
-                    this.options.target = this.$el.attr('href');
-                    this.options.content = '';
-                }
-                if (!this.options.ajaxUrl && this.$el.attr('href').substr(0, 1) !== '#') {
-                    this.options.ajaxUrl = this.$el.attr('href');
-                }
-            }
             this.$el.on('click', function(e) {
                 e.stopPropagation();
                 e.preventDefault();
@@ -111,16 +110,19 @@ define([
         createAjaxModal: function() {
             this.emit('before-ajax');
             this.loading.show();
+            var url = this.options.ajaxUrl;
+            // var url = new Url(this.options.ajaxUrl);
+            $.each(this.options.ajaxExtraParameter || {}, function(key, val) {
+                url.query[key] = val;
+            });
             this.ajaxXHR = $.ajax({
-                url: this.options.ajaxUrl,
-                type: this.options.ajaxType
+                url: url
             }).done(function(response, textStatus, xhr) {
                 this.ajaxXHR = undefined;
                 this.$raw = $('<div />').append($(utils.parseBodyTag(response)));
                 this.emit('after-ajax', this, textStatus, xhr);
                 this.show();
             }.bind(this)).fail(function(xhr, textStatus, errorStatus) {
-                var options = this.options.actionOptions;
                 window.alert(_t('There was an error loading modal.'));
                 this.hide();
                 this.emit('linkActionError', [xhr, textStatus, errorStatus]);
@@ -129,38 +131,57 @@ define([
             }.bind(this));
         },
 
-        createTargetModal: function() {
-            this.$raw = $(this.options.target).clone();
-            this.show();
-        },
-
         createBasicModal: function() {
             this.$raw = $('<div/>').html(this.$el.clone());
             this.show();
         },
 
         createHtmlModal: function() {
-            var $el = $(this.options.html);
-            this.$raw = $el;
+            this.$raw = $(this.options.html);
+            this.show();
+        },
+
+        createTargetModal: function() {
+            this.$raw = $(this.options.target).clone();
             this.show();
         },
 
         createImageModal: function() {
-            var src = this.$el.attr('href');
+            var src = this.options.image;
             this.$raw = $('<div><h1>Image</h1><div id="content"><div class="modal-image"><img src="' + src + '" /></div></div></div>');
             this.show();
         },
 
         initModal: function() {
-            if (this.options.ajaxUrl) {
-                this.createModal = this.createAjaxModal;
-            } else if (this.options.target) {
-                this.createModal = this.createTargetModal;
-            } else if (this.options.html) {
+            var url = this.$el.attr('href') || '';
+            if (this.options.html) {
+                // mode html
                 this.createModal = this.createHtmlModal;
-            } else if (this.options.image){
+            } else if (this.options.target || url.substr(0, 1) === '#') {
+                // mode target
+                if (!this.options.target) {
+                    this.options.target = url;
+                }
+                this.createModal = this.createTargetModal;
+            } else if (this.options.image || (
+                    this.endsWith(url, '.jpg') ||
+                    this.endsWith(url, '.jpeg') ||
+                    this.endsWith(url, '.png') ||
+                    this.endsWith(url, '.gif')
+            )) {
+                // mode image
+                if (!this.options.image) {
+                    this.options.image = url;
+                }
                 this.createModal = this.createImageModal;
+            } else if (this.options.ajaxUrl || url) {
+                // mode ajax
+                if (!this.options.ajaxUrl) {
+                    this.options.ajaxUrl = url;
+                }
+                this.createModal = this.createAjaxModal;
             } else {
+                // mode basic
                 this.createModal = this.createBasicModal;
             }
         },
@@ -192,9 +213,10 @@ define([
                 $(this.options.prependContent, $raw).remove();
             }
 
-            // Filter out the content if there is a selector provided
-            if (this.options.content) {
-                templateOptions.content = $(this.options.content, $raw).html();
+            if (this.options.ajaxUrl && this.options.ajaxContentFilterSelector) {
+                // Filter out the content if there is a selector provided and we're in ajax mode.
+                // Use raw as fallback, if selector not present
+                templateOptions.content = $(this.options.ajaxContentFilterSelector, $raw).html() || $raw.html();
             } else {
                 templateOptions.content = $raw.html();
             }
@@ -331,7 +353,7 @@ define([
                     if (this.tagName.toLowerCase() === 'input' || this.tagName.toLowerCase() === 'button') {
                         that.handleFormAction($action);
                     // handle event on link with jQuery.ajax
-                    } else if (that.options.actionOptions.ajaxUrl !== null || this.tagName.toLowerCase() === 'a') {
+                    } else if ($action.attr('href')) {
                         that.handleLinkAction($action);
                     }
 
@@ -344,15 +366,8 @@ define([
             var extraData = {};
             extraData[$action.attr('name')] = $action.attr('value');
 
-            var $form;
-
-            if ($.nodeName($action[0], 'form')) {
-                $form = $action;
-            } else {
-                $form = $action.parents('form:not(.disableAutoSubmit)');
-            }
-
-            var url = this.options.actionOptions.ajaxUrl || $action.parents('form').attr('action');
+            var $form = $action.closest('form');
+            var url = $form.attr('action');
 
             // We want to trigger the form submit event but NOT use the default
             $form.on('submit', function(e) {
@@ -360,7 +375,6 @@ define([
             });
             $form.trigger('submit');
 
-            this.loading.show(false);
             $form.ajaxSubmit({
                 timeout: this.options.actionOptions.timeout,
                 data: extraData,
@@ -368,7 +382,6 @@ define([
                 error: function(xhr, textStatus, errorStatus) {
                     this.loading.hide();
                     window.alert(_t('There was an error submitting the form.'));
-                    console.log('error happened do something');
                     this.emit('formActionError', [xhr, textStatus, errorStatus]);
                 }.bind(this),
                 success: function(response, state, xhr, form) {
@@ -405,9 +418,9 @@ define([
         },
 
         handleLinkAction: function($action) {
-            var url = this.options.actionOptions.ajaxUrl || $action.attr('href');
+            var url = $action.attr('href');
 
-            // Non-ajax link (I know it says "ajaxUrl" ...)
+            // Non-ajax link
             if (this.options.actionOptions.displayInModal === false) {
                 if ($action.attr('target') === '_blank') {
                     window.open(url, '_blank');
@@ -431,6 +444,11 @@ define([
                 this.loading.hide();
             }.bind(this));
         },
+
+        endsWith: function(string, suffix) {
+            string = string.toLowerCase();
+            return string.indexOf(suffix, string.length - suffix.length) !== -1;
+        }
 
     });
 
