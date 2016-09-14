@@ -24,7 +24,7 @@ define([
     'pat-base',
     'pat-registry',
     'mockup-utils',
-    'text!fancyoverlay-patterns-modal-url/template.xml',
+    'text!fancyoverlay-patterns-modal/template.xml',
     'translate',
     'jquery.form',
     'modernizr'
@@ -38,6 +38,7 @@ define([
         parser: 'mockup',
 
         createModal: null,
+        loading: null,
 
         defaults: {
             actionButtonSelector: '.formControls > input[type="submit"]',
@@ -48,7 +49,7 @@ define([
                 target: null,
                 ajaxUrl: null, // string, or function($el, options) that returns a string
                 timeout: 5000,
-                displayInModal: true,
+                displayInModal: false,
                 reloadWindowOnClose: true,
                 error: '.portalMessage.error',
                 formFieldError: '.field.error',
@@ -76,14 +77,13 @@ define([
         },
 
         // transition setup
-        transEndEventNames: {
+        transEndEventName: {
             'WebkitTransition': 'webkitTransitionEnd',
             'MozTransition': 'transitionend',
             'OTransition': 'oTransitionEnd',
             'msTransition': 'MSTransitionEnd',
             'transition': 'transitionend'
-        },
-        transEndEventName: transEndEventNames[Modernizr.prefixed('transition')],
+        }[Modernizr.prefixed('transition')],
         browserSupport: {transitions: Modernizr.csstransitions},
 
         reloadWindow: function() {
@@ -104,6 +104,7 @@ define([
                 e.preventDefault();
                 this.createModal();
             }.bind(this));
+            this.loading = new utils.Loading();
             this.initModal();
         },
 
@@ -182,7 +183,7 @@ define([
             var templateOptions = {
                 prepend: '',
                 content: '',
-                buttons: '<div class="pattern-modal-buttons"></div>'
+                buttons: '<div class="fancyoverlay-buttons"></div>'
             };
 
             // Grab items to to insert into the prepend area
@@ -224,7 +225,7 @@ define([
                     e.preventDefault();
                 })
                   .clone()
-                  .appendTo($('.pattern-modal-buttons', $modal))
+                  .appendTo($('.fancyoverlay-buttons', $modal))
                   .off('click').on('click', function(e) {
                     e.stopPropagation();
                     e.preventDefault();
@@ -324,7 +325,7 @@ define([
         form: function() {
             var that = this;
 
-            $(this.options.actionButtonSelector, $modal).each(function() {
+            $(this.options.actionButtonSelector, this.$modal).each(function() {
                 var $action = $(this);
                 $action.on('click', function(e) {
                     e.stopPropagation();

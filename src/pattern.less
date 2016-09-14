@@ -1,14 +1,16 @@
 /* Overlay style */
-.aaf-overlay {
+.fancyoverlay {
     position: fixed;
     width: 100%;
     height: 100%;
     top: 0;
     left: 0;
     background: rgba(0,0,0,0.9);
+    z-index: 999999; // ufff...
+    overflow: scroll;
 
     /* Overlay closing cross */
-    .aaf-overlay-close {
+    .fancyoverlay-close {
         width: 80px;
         height: 80px;
         position: absolute;
@@ -16,21 +18,26 @@
         top: 20px;
         overflow: hidden;
         border: none;
-        background: url(../img/cross.png) no-repeat center center;
+        background: url(cross.png) no-repeat center center;
         text-indent: 200%;
         color: transparent;
         outline: none;
         z-index: 100;
     }
 
-    .aaf-overlay-container {
+    .fancyoverlay-container {
         width: 90%;
         margin: 4em auto 2em auto;
+    }
+    .fancyoverlay-buttons {
+        width: 90%;
+        margin: 0 auto 4em auto;
+        text-align: right;
     }
 }
 
 /* Effects */
-.aaf-overlay-hugeinc {
+.fancyoverlay-hugeinc {
     opacity: 0;
     visibility: hidden;
     -webkit-transition: opacity 0.5s, visibility 0s 0.5s;
