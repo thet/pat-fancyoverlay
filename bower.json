@@ -1,9 +1,8 @@
 {
   "name": "pat-fancyoverlay",
-  "version": "0.0.1",
   "devDependencies": {},
   "dependencies": {
-    "patternslib": "master"
+    "patternslib": "master",
   },
   "resolutions": {
     "jquery": "1.11.1"
