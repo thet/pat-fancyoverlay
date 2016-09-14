@@ -14,7 +14,6 @@ require.config({
         'pat-registry':                 'bower_components/patternslib/src/core/registry',
         'pat-utils':                    'bower_components/patternslib/src/core/utils',
         // Extra dependencies
-        'domurl':                       'bower_components/domurl/url',
         'mockup-i18n':                  'bower_components/mockup/mockup/js/i18n',
         'mockup-utils':                 'bower_components/mockup/mockup/js/utils',
         'modernizr':                    'bower_components/modernizr/modernizr',

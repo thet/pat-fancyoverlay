@@ -110,13 +110,8 @@ define([
         createAjaxModal: function() {
             this.emit('before-ajax');
             this.loading.show();
-            var url = this.options.ajaxUrl;
-            // var url = new Url(this.options.ajaxUrl);
-            $.each(this.options.ajaxExtraParameter || {}, function(key, val) {
-                url.query[key] = val;
-            });
             this.ajaxXHR = $.ajax({
-                url: url
+                url: this.makeAjaxUrl(this.options.ajaxUrl)
             }).done(function(response, textStatus, xhr) {
                 this.ajaxXHR = undefined;
                 this.$raw = $('<div />').append($(utils.parseBodyTag(response)));
@@ -367,7 +362,7 @@ define([
             extraData[$action.attr('name')] = $action.attr('value');
 
             var $form = $action.closest('form');
-            var url = $form.attr('action');
+            var url = this.makeAjaxUrl($form.attr('action'));
 
             // We want to trigger the form submit event but NOT use the default
             $form.on('submit', function(e) {
@@ -433,7 +428,7 @@ define([
 
             // ajax version
             $.ajax({
-                url: url
+                url: this.makeAjaxUrl(url)
             }).fail(function(xhr, textStatus, errorStatus) {
                 window.alert(_t('There was an error loading modal.'));
                 this.emit('linkActionError', [xhr, textStatus, errorStatus]);
@@ -448,6 +443,19 @@ define([
         endsWith: function(string, suffix) {
             string = string.toLowerCase();
             return string.indexOf(suffix, string.length - suffix.length) !== -1;
+        },
+
+        makeAjaxUrl: function(url) {
+            var query = '';
+            $.each(this.options.ajaxExtraParameter || {}, function(key, val) {
+                query += key + '=' + val;
+            });
+            if (url.indexOf('?') === -1) {
+                url += '?' + query;
+            } else {
+                url += '&' + query;
+            }
+            return url;
         }
 
     });
