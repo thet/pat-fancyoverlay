@@ -2,14 +2,18 @@
   "name": "pat-fancyoverlay",
   "devDependencies": {},
   "dependencies": {
+    "domurl": "",
+    "jquery": "",
+    "mockup": "",
+    "modernizr": "",
     "patternslib": "master",
-  },
-  "resolutions": {
-    "jquery": "1.11.1"
+    "underscore": ""
   },
   "keywords": [
     "patternslib",
-    "pattern"
+    "pattern",
+    "overlay",
+    "modal"
   ],
   "license": "BSD",
   "ignore": [
