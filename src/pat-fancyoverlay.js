@@ -33,8 +33,8 @@ define([
     'use strict';
 
     var Modal = Base.extend({
-        name: 'plone-modal',
-        trigger: '.pat-plone-modal',
+        name: 'fancyoverlay',
+        trigger: '.pat-fancyoverlay',
         parser: 'mockup',
 
         createModal: null,
@@ -242,13 +242,13 @@ define([
               .on('click', function(e) {
                 e.stopPropagation();
                 e.preventDefault();
-                $(e.target).trigger('destroy.plone-modal.patterns');
+                $(e.target).trigger('destroy.patterns.fancyoverlay');
             });
 
             // INIT FORM
             this.form();
 
-            this.$modal.on('destroy.plone-modal.patterns', function(e) {
+            this.$modal.on('destroy.patterns.fancyoverlay', function(e) {
                 e.stopPropagation();
                 this.hide();
             }.bind(this));
@@ -265,7 +265,6 @@ define([
             this.$el.addClass('open');
             this.$modal.addClass('open');
             registry.scan(this.$modal);
-            $('body').addClass('plone-modal-open');
             this.emit('shown');
         },
 
@@ -305,10 +304,6 @@ define([
             }
 
             this.$el.removeClass('open');
-            if ($('.plone-modal', $('body')).size() < 1) {
-                $('body').removeClass('plone-modal-open');
-            }
-
             this.emit('hidden');
         },
 
@@ -398,7 +393,7 @@ define([
                     if (this.options.actionOptions.displayInModal === true) {
                         this.redraw(response);
                     } else {
-                        $action.trigger('destroy.plone-modal.patterns');
+                        $action.trigger('destroy.patterns.fancyoverlay');
                         // also calls hide
                         if (this.options.actionOptions.reloadWindowOnClose) {
                             this.reloadWindow();
