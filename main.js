@@ -1,6 +1,6 @@
 require.config({
-    baseUrl: 'src',
     paths: {
+        'pat-fancyoverlay-url':         'src',
         // Patternslib core dependencies
         'jquery':                       'bower_components/jquery/dist/jquery',
         'jquery.browser':               'bower_components/jquery.browser/dist/jquery.browser',

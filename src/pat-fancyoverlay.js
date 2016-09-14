@@ -24,7 +24,7 @@ define([
     'pat-base',
     'pat-registry',
     'mockup-utils',
-    'text!fancyoverlay-patterns-modal/template.xml',
+    'text!pat-fancyoverlay-url/template.xml',
     'translate',
     'jquery.form',
     'modernizr'
