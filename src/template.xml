@@ -1,0 +1,10 @@
+<div class="fancyoverlay fancyoverlay-hugeinc">
+  <button type="button" class="fancyoverlay-close">Close</button>
+  <div class="fancyoverlay-container">
+    <%= prepend %>
+    <%= content %>
+  </div>
+  <% if (buttons) { %>
+    <%= buttons %>
+  <% } %>
+</div>
