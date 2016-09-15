@@ -23,14 +23,40 @@ define([
     'underscore',
     'pat-base',
     'pat-registry',
+    "pat-parser",
     'mockup-utils',
     'text!pat-fancyoverlay-url/template.xml',
     'translate',
     'jquery.form',
     'modernizr'
-], function($, _, Base, registry, utils, modalTemplate, _t) {
+], function($, _, Base, registry, Parser, utils, modalTemplate, _t) {
 
     'use strict';
+
+    var parser = new Parser('fancyoverlay');
+
+    // different modal modes
+    parser.addArgument('ajaxUrl', undefined);  // AJAX Url
+    parser.addArgument('target', undefined);   // If set, the value will be used as selector to find the modal's contents.
+    parser.addArgument('html', undefined);     // If set, the value will be used as HTML string content for the modal.
+    parser.addArgument('image', undefined);    // If set to true, then the anchor's href attribute will be used as image source.
+
+    // ajax mode
+    parser.addArgument('ajaxContentFilterSelector', '#content');
+    parser.addArgument('ajaxExtraParameter', {'ajax_load': 1});  // extra url parameters for ajax loading
+
+    // content
+    parser.addArgument('actionButtonSelector', '.formControls > input[type="submit"]');
+    parser.addArgument('prependContent', '.portalMessage');
+    parser.addArgument('prependHeader', '.documentFirstHeading, #content-core > p.discreet');
+
+    // action options
+    parser.addArgument('timeout', false);
+    parser.addArgument('reloadWindowOnClose', true);
+    parser.addArgument('error', '.portalMessage.error');
+    parser.addArgument('formFieldError', '.field.error');
+    parser.addArgument('redirectOnResponse', false);
+    parser.addArgument('redirectToUrl', undefined);
 
     var Modal = Base.extend({
         name: 'fancyoverlay',
@@ -39,51 +65,6 @@ define([
 
         createModal: null,
         loading: null,
-
-        defaults: {
-            actionButtonSelector: '.formControls > input[type="submit"]',
-            prependContent: '.portalMessage',
-            prependHeader: '.documentFirstHeading, #content-core > p.discreet',
-
-            // different modal modes
-            target: undefined,  // If set, the value will be used as selector to find the modal's contents.
-            html: undefined,    // If set, the value will be used as HTML string content for the modal.
-            image: undefined,   // If set to true, then the anchor's href attribute will be used as image source.
-            ajaxUrl: null,  // Url
-
-            // ajax mode
-            ajaxContentFilterSelector: '#content',
-            ajaxExtraParameter: {'ajax_load': 1},  // extra url parameters for ajax loading
-
-            // action options
-            actionOptions: {
-                timeout: 5000,
-                displayInModal: false,
-                reloadWindowOnClose: true,
-                error: '.portalMessage.error',
-                formFieldError: '.field.error',
-                redirectOnResponse: false,
-                redirectToUrl: function(response) {
-                    var reg;
-                    reg = /<body.*data-view-url=[\"'](.*)[\"'].*/im.exec(response);
-                    if (reg && reg.length > 1) {
-                        // view url as data attribute on body (Plone 5)
-                        return reg[1].split('"')[0];
-                    }
-                    reg = /<body.*data-base-url=[\"'](.*)[\"'].*/im.exec(response);
-                    if (reg && reg.length > 1) {
-                        // Base url as data attribute on body (Plone 5)
-                        return reg[1].split('"')[0];
-                    }
-                    reg = /<base.*href=[\"'](.*)[\"'].*/im.exec(response);
-                    if (reg && reg.length > 1) {
-                        // base tag available (Plone 4)
-                        return reg[1];
-                    }
-                    return '';
-                }
-            },
-        },
 
         // transition setup
         transEndEventName: {
@@ -99,6 +80,8 @@ define([
             window.parent.location.reload();
         },
         init: function() {
+            this.options = parser.parse(this.$el);
+
             this.$el.on('click', function(e) {
                 e.stopPropagation();
                 e.preventDefault();
@@ -385,7 +368,7 @@ define([
             $form.trigger('submit');
 
             $form.ajaxSubmit({
-                timeout: this.options.actionOptions.timeout,
+                timeout: this.options.timeout,
                 data: extraData,
                 url: url,
                 error: function(xhr, textStatus, errorStatus) {
@@ -397,27 +380,29 @@ define([
                     this.loading.hide();
                     // if error is found (NOTE: check for both the portal errors
                     // and the form field-level errors)
-                    if ($(this.options.actionOptions.error, response).size() !== 0 ||
-                        $(this.options.actionOptions.formFieldError, response).size() !== 0) {
+                    if ($(this.options.error, response).size() !== 0 ||
+                        $(this.options.formFieldError, response).size() !== 0) {
                         this.redraw(response);
                         return;
                     }
 
-                    if (this.options.actionOptions.redirectOnResponse === true) {
-                        if (typeof this.options.actionOptions.redirectToUrl === 'function') {
-                            window.parent.location.href = this.options.actionOptions.redirectToUrl(response);
+                    if (this.options.redirectOnResponse === true) {
+                        if (this.options.redirectToUrl) {
+                            // use parameter
+                            window.parent.location.href = this.options.redirectToUrl;
                         } else {
-                            window.parent.location.href = this.options.actionOptions.redirectToUrl;
+                            // use function
+                            window.parent.location.href = this.redirectToUrl(response);
                         }
                         return; // cut out right here since we're changing url
                     }
 
-                    if (this.options.actionOptions.displayInModal === true) {
+                    if (this.options.displayInModal === true) {
                         this.redraw(response);
                     } else {
                         $action.trigger('destroy.patterns.fancyoverlay');
                         // also calls hide
-                        if (this.options.actionOptions.reloadWindowOnClose) {
+                        if (this.options.reloadWindowOnClose) {
                             this.reloadWindow();
                         }
                     }
@@ -430,7 +415,7 @@ define([
             var url = $action.attr('href');
 
             // Non-ajax link
-            if (this.options.actionOptions.displayInModal === false) {
+            if (this.options.displayInModal === false) {
                 if ($action.attr('target') === '_blank') {
                     window.open(url, '_blank');
                     this.loading.hide();
@@ -452,6 +437,26 @@ define([
             }.bind(this)).always(function() {
                 this.loading.hide();
             }.bind(this));
+        },
+
+        redirectToUrl: function(response) {
+            var reg;
+            reg = /<body.*data-view-url=[\"'](.*)[\"'].*/im.exec(response);
+            if (reg && reg.length > 1) {
+                // view url as data attribute on body (Plone 5)
+                return reg[1].split('"')[0];
+            }
+            reg = /<body.*data-base-url=[\"'](.*)[\"'].*/im.exec(response);
+            if (reg && reg.length > 1) {
+                // Base url as data attribute on body (Plone 5)
+                return reg[1].split('"')[0];
+            }
+            reg = /<base.*href=[\"'](.*)[\"'].*/im.exec(response);
+            if (reg && reg.length > 1) {
+                // base tag available (Plone 4)
+                return reg[1];
+            }
+            return '';
         },
 
         endsWith: function(string, suffix) {
