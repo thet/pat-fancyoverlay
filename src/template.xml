@@ -1,5 +1,6 @@
 <div class="fancyoverlay fancyoverlay-hugeinc">
   <button type="button" class="fancyoverlay-close">Close</button>
+  <header class="fancyoverlay-header"><%= header %></header>
   <div class="fancyoverlay-container">
     <%= prepend %>
     <%= content %>

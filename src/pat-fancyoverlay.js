@@ -43,6 +43,7 @@ define([
         defaults: {
             actionButtonSelector: '.formControls > input[type="submit"]',
             prependContent: '.portalMessage',
+            prependHeader: '.documentFirstHeading, #content-core > p.discreet',
 
             // different modal modes
             target: undefined,  // If set, the value will be used as selector to find the modal's contents.
@@ -197,15 +198,28 @@ define([
 
             // Object that will be passed to the template
             var templateOptions = {
+                header: '',
                 prepend: '',
                 content: '',
                 buttons: '<div class="fancyoverlay-buttons"></div>'
             };
 
-            // Grab items to to insert into the prepend area
+            // Grab items to insert into the header area
+            if (this.options.prependHeader) {
+                $(this.options.prependHeader, $raw).each(function () {
+                    var $el = $(this);
+                    templateOptions.header += $('<div />').append($el.clone()).html();
+                    $el.remove();
+                });
+            }
+
+            // Grab items to insert into the prepend area
             if (this.options.prependContent) {
-                templateOptions.prepend = $('<div />').append($(this.options.prependContent, $raw).clone()).html();
-                $(this.options.prependContent, $raw).remove();
+                $(this.options.prependContent, $raw).each(function () {
+                    var $el = $(this);
+                    templateOptions.prepend += $('<div />').append($el.clone()).html();
+                    $el.remove();
+                });
             }
 
             if (this.options.ajaxUrl && this.options.ajaxContentFilterSelector) {
