@@ -61,3 +61,22 @@
         transition: opacity 0.5s;
     }
 }
+
+
+.fancyoverlay.small {
+    .fancyoverlay-header,
+    .fancyoverlay-buttons,
+    .fancyoverlay-container {
+        max-width: 64em;
+    }
+}
+
+
+// special Plone fixes
+//
+.fancyoverlay {
+    form#login_form, div#login-forgotten-password {
+        margin: auto;
+        padding: 1em;
+    }
+}

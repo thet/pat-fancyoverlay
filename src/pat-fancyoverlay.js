@@ -49,6 +49,8 @@ define([
     parser.addArgument('actionButtonSelector', '.formControls > input[type="submit"]');
     parser.addArgument('prependContent', '.portalMessage');
     parser.addArgument('prependHeader', '.documentFirstHeading, #content-core > p.discreet');
+    parser.addArgument('cssclasses', undefined);  // Extra CSS classes for the overlay
+    parser.addArgument('title', undefined);  // Title for the overlay
 
     // action options
     parser.addArgument('timeout', false);
@@ -184,7 +186,9 @@ define([
                 header: '',
                 prepend: '',
                 content: '',
-                buttons: '<div class="fancyoverlay-buttons"></div>'
+                buttons: '<div class="fancyoverlay-buttons"></div>',
+                cssclasses: this.options.cssclasses,
+                title: this.options.title
             };
 
             // Grab items to insert into the header area
