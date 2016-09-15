@@ -23,7 +23,7 @@ define([
     'underscore',
     'pat-base',
     'pat-registry',
-    "pat-parser",
+    'pat-parser',
     'mockup-utils',
     'text!pat-fancyoverlay-url/template.xml',
     'translate',
@@ -47,6 +47,7 @@ define([
 
     // content
     parser.addArgument('actionButtonSelector', '.formControls > input[type="submit"]');
+    parser.addArgument('actionButtonCancelSelector', '#form-buttons-cancel');
     parser.addArgument('prependContent', '.portalMessage');
     parser.addArgument('prependHeader', '.documentFirstHeading, #content-core > p.discreet');
     parser.addArgument('cssclasses', undefined);  // Extra CSS classes for the overlay
@@ -254,17 +255,27 @@ define([
 
             this.emit('before-events-setup');
 
+            // INIT FORM
+            this.form();
+
             // CLOSE modal
             $('.fancyoverlay-close', this.$modal)
               .off('click')
               .on('click', function(e) {
                 e.stopPropagation();
                 e.preventDefault();
-                $(e.target).trigger('destroy.patterns.fancyoverlay');
-            });
 
-            // INIT FORM
-            this.form();
+                var cancelbutton = $(this.options.actionButtonCancelSelector, this.$raw);
+                if (cancelbutton.length) {
+                    // submit the cancel action and close afterwards.
+                    // prevents contents being left in "locked" state.
+                    this.loading.show(false);
+                    this.handleFormAction($(cancelbutton[0]));
+                } else {
+                    this.$modal.trigger('destroy.patterns.fancyoverlay');
+                }
+
+            }.bind(this));
 
             this.$modal.on('destroy.patterns.fancyoverlay', function(e) {
                 e.stopPropagation();
@@ -358,7 +369,8 @@ define([
         },
 
         handleFormAction: function($action) {
-            // pass action that was clicked when submiting form
+            var isCancel = $action.is(this.options.actionButtonCancelSelector);
+
             var extraData = {};
             extraData[$action.attr('name')] = $action.attr('value');
 
@@ -390,7 +402,7 @@ define([
                         return;
                     }
 
-                    if (this.options.redirectOnResponse === true) {
+                    if (!isCancel && this.options.redirectOnResponse === true) {
                         if (this.options.redirectToUrl) {
                             // use parameter
                             window.parent.location.href = this.options.redirectToUrl;
@@ -404,9 +416,9 @@ define([
                     if (this.options.displayInModal === true) {
                         this.redraw(response);
                     } else {
-                        $action.trigger('destroy.patterns.fancyoverlay');
                         // also calls hide
-                        if (this.options.reloadWindowOnClose) {
+                        this.$modal.trigger('destroy.patterns.fancyoverlay');
+                        if (!isCancel && this.options.reloadWindowOnClose) {
                             this.reloadWindow();
                         }
                     }
