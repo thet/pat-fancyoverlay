@@ -1,10 +1,10 @@
 <div class="fancyoverlay fancyoverlay-hugeinc <%= cssclasses %>">
   <button type="button" class="fancyoverlay-close">Close</button>
-  <header class="fancyoverlay-header">
+  <header class="fancyoverlay-header plone-modal-header">
     <% if (title) { %><h1><%= title %></h1><% } %>
     <%= header %>
   </header>
-  <div class="fancyoverlay-container">
+  <div class="fancyoverlay-container plone-modal-body">
     <%= prepend %>
     <%= content %>
   </div>

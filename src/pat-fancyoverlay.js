@@ -46,10 +46,10 @@ define([
     parser.addArgument('ajaxExtraParameter', {'ajax_load': 1});  // extra url parameters for ajax loading
 
     // content
-    parser.addArgument('actionButtonSelector', '.formControls > input[type="submit"]');
-    parser.addArgument('actionButtonCancelSelector', '#form-buttons-cancel');
+    parser.addArgument('buttons', '.formControls > input[type="submit"]');
+    parser.addArgument('buttonsCancel', '#form-buttons-cancel');
     parser.addArgument('prependContent', '.portalMessage');
-    parser.addArgument('prependHeader', '.documentFirstHeading, #content-core > p.discreet');
+    parser.addArgument('prependHeader', '.documentFirstHeading, #content-core > p.discreet, .linkModal > h1, .linkModal p.info');
     parser.addArgument('cssclasses', undefined);  // Extra CSS classes for the overlay
     parser.addArgument('title', undefined);  // Title for the overlay
 
@@ -83,8 +83,12 @@ define([
             window.parent.location.reload();
         },
         init: function() {
-            this.options = parser.parse(this.$el);
-
+            this.options = $.extend(
+                true,
+                {},
+                parser.parse(this.$el),
+                this.options
+            );
             this.$el.on('click', function(e) {
                 e.stopPropagation();
                 e.preventDefault();
@@ -103,7 +107,7 @@ define([
                 this.ajaxXHR = undefined;
                 this.$raw = $('<div />').append($(utils.parseBodyTag(response)));
                 this.emit('after-ajax', this, textStatus, xhr);
-                this.show();
+                this._show();
             }.bind(this)).fail(function(xhr, textStatus, errorStatus) {
                 window.alert(_t('There was an error loading modal.'));
                 this.hide();
@@ -115,23 +119,23 @@ define([
 
         createBasicModal: function() {
             this.$raw = $('<div/>').html(this.$el.clone());
-            this.show();
+            this._show();
         },
 
         createHtmlModal: function() {
             this.$raw = $(this.options.html);
-            this.show();
+            this._show();
         },
 
         createTargetModal: function() {
             this.$raw = $(this.options.target).clone();
-            this.show();
+            this._show();
         },
 
         createImageModal: function() {
             var src = this.options.image;
             this.$raw = $('<div><h1>Image</h1><div id="content"><div class="modal-image"><img src="' + src + '" /></div></div></div>');
-            this.show();
+            this._show();
         },
 
         initModal: function() {
@@ -187,7 +191,7 @@ define([
                 header: '',
                 prepend: '',
                 content: '',
-                buttons: '<div class="fancyoverlay-buttons"></div>',
+                buttons: '<div class="fancyoverlay-buttons plone-modal-footer"></div>',
                 cssclasses: this.options.cssclasses,
                 title: this.options.title
             };
@@ -236,7 +240,7 @@ define([
             });
 
             // Setup buttons
-            $(this.options.actionButtonSelector, this.$modal).each(function() {
+            $(this.options.buttons, this.$modal).each(function() {
                 var $button = $(this);
                 $button
                   .on('click', function(e) {
@@ -265,7 +269,7 @@ define([
                 e.stopPropagation();
                 e.preventDefault();
 
-                var cancelbutton = $(this.options.actionButtonCancelSelector, this.$raw);
+                var cancelbutton = $(this.options.buttonsCancel, this.$raw);
                 if (cancelbutton.length) {
                     // submit the cancel action and close afterwards.
                     // prevents contents being left in "locked" state.
@@ -288,6 +292,11 @@ define([
         },
 
         show: function() {
+            // support plone-modal API
+            this.createModal();
+        },
+
+        _show: function() {
             this.render();
             this.emit('show');
             this.loading.hide();
@@ -349,7 +358,7 @@ define([
         form: function() {
             var that = this;
 
-            $(this.options.actionButtonSelector, this.$modal).each(function() {
+            $(this.options.buttons, this.$modal).each(function() {
                 var $action = $(this);
                 $action.on('click', function(e) {
                     e.stopPropagation();
@@ -369,7 +378,7 @@ define([
         },
 
         handleFormAction: function($action) {
-            var isCancel = $action.is(this.options.actionButtonCancelSelector);
+            var isCancel = $action.is(this.options.buttonsCancel);
 
             var extraData = {};
             extraData[$action.attr('name')] = $action.attr('value');
