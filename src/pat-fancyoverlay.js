@@ -55,11 +55,12 @@ define([
 
     // action options
     parser.addArgument('timeout', false);
-    parser.addArgument('reloadWindowOnClose', true);
     parser.addArgument('error', '.portalMessage.error');
     parser.addArgument('formFieldError', '.field.error');
+    parser.addArgument('displayInModal', undefined);
     parser.addArgument('redirectOnResponse', false);
     parser.addArgument('redirectToUrl', undefined);
+    parser.addArgument('reloadWindowOnClose', false);
     
     parser.addArgument('transitionStyle', undefined);
 

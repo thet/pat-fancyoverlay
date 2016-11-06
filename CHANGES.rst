@@ -4,6 +4,9 @@ Changelog
 1.0.0 (unreleased)
 ------------------
 
+- Set default of ``reloadWindowOnClose`` to ``false``.
+  [thet]
+
 - Option to choose transitionStyle. Set to ``undefined`` removes transition.
   [thet]
 
