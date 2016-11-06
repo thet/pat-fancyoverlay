@@ -79,6 +79,8 @@ define([
         }[Modernizr.prefixed('transition')],
         browserSupport: {transitions: Modernizr.csstransitions},
 
+        origBodyOverflow: 'auto',
+
         reloadWindow: function() {
             window.parent.location.reload();
         },
@@ -297,6 +299,10 @@ define([
         },
 
         _show: function() {
+            // don't show body scrollbars when overlay is open
+            this.origBodyOverflow = $('body').css('overflow');
+            $('body').css('overflow', 'hidden');
+
             this.render();
             this.emit('show');
             this.loading.hide();
@@ -325,7 +331,7 @@ define([
                     if (ev.propertyName !== 'visibility') {
                         return;
                     }
-                    this.removeEventListener(this.transEndEventName, onEndTransitionFn);
+                    this.$modal[0].removeEventListener(this.transEndEventName, onEndTransitionFn);
                 }
                 if (this.$modal !== undefined) {
                     this.$modal.removeClass('close');
@@ -336,10 +342,13 @@ define([
             this.$modal.removeClass('open');
             this.$modal.addClass('close');
             if (this.browserSupport.transitions) {
-                this.$modal.addEventListener(this.transEndEventName, onEndTransitionFn);
+                this.$modal[0].addEventListener(this.transEndEventName, onEndTransitionFn);
             } else {
                 onEndTransitionFn();
             }
+
+            // show original overlay value on body after closing
+            $('body').css('overflow', this.origBodyOverflow);
 
             this.$el.removeClass('open');
             this.emit('hidden');
