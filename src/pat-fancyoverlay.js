@@ -60,6 +60,8 @@ define([
     parser.addArgument('formFieldError', '.field.error');
     parser.addArgument('redirectOnResponse', false);
     parser.addArgument('redirectToUrl', undefined);
+    
+    parser.addArgument('transitionStyle', undefined);
 
     var Modal = Base.extend({
         name: 'fancyoverlay',
@@ -327,7 +329,7 @@ define([
             this.loading.hide();
 
             var onEndTransitionFn = function(ev) {
-                if (this.browserSupport.transitions) {
+                if (this.options.transitionStyle && this.browserSupport.transitions) {
                     if (ev.propertyName !== 'visibility') {
                         return;
                     }
@@ -341,7 +343,7 @@ define([
 
             this.$modal.removeClass('open');
             this.$modal.addClass('close');
-            if (this.browserSupport.transitions) {
+            if (this.options.transitionStyle && this.browserSupport.transitions) {
                 this.$modal[0].addEventListener(this.transEndEventName, onEndTransitionFn);
             } else {
                 onEndTransitionFn();
